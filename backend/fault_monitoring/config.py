@@ -1,0 +1,5 @@
+import os
+
+HEALTH_CHECK_INTERVAL = float(os.getenv("HEALTH_CHECK_INTERVAL", "5.0"))
+HEALTH_CHECK_TIMEOUT = float(os.getenv("HEALTH_CHECK_TIMEOUT", "2.0"))
+FAILURE_THRESHOLD = int(os.getenv("FAILURE_THRESHOLD", "3"))

@@ -1,0 +1,76 @@
+syntax = "proto3";
+
+package campus_resource;
+
+// Service defining inter-node communication and distributed coordination RPCs
+service DepartmentNodeService {
+    // Phase 3 RPCs
+    rpc GetNodeInfo (NodeInfoRequest) returns (NodeInfoResponse);
+    rpc GetResources (ResourceRequest) returns (ResourceResponse);
+
+    // Phase 4 Coordination RPCs (Ricart-Agrawala Mutual Exclusion)
+    rpc RequestResourceAccess (ResourceAccessRequest) returns (ResourceAccessResponse);
+    rpc ReleaseResourceAccess (ResourceReleaseRequest) returns (ResourceReleaseResponse);
+}
+
+// Request message for GetNodeInfo
+message NodeInfoRequest {
+    string requesting_node = 1;
+}
+
+// Response message for GetNodeInfo
+message NodeInfoResponse {
+    string node_name = 1;
+    string status = 2;
+}
+
+// Request message for GetResources
+message ResourceRequest {
+    string department = 1;
+}
+
+// Resource item representation in Protocol Buffers
+message ResourceProto {
+    int32 id = 1;
+    string name = 2;
+    string resource_type = 3;
+    string location = 4;
+    string department = 5;
+    int32 capacity = 6;
+    bool is_available = 7;
+}
+
+// Response message for GetResources containing a list of ResourceProto
+message ResourceResponse {
+    string department = 1;
+    repeated ResourceProto resources = 2;
+}
+
+// Request message for RequestResourceAccess (Ricart-Agrawala)
+message ResourceAccessRequest {
+    string requester_node = 1;
+    string resource_id = 2;
+    int64 timestamp = 3;
+}
+
+// Response message for RequestResourceAccess
+message ResourceAccessResponse {
+    bool granted = 1;
+    string responder_node = 2;
+    string message = 3;
+    int64 timestamp = 4;
+}
+
+// Request message for ReleaseResourceAccess
+message ResourceReleaseRequest {
+    string requester_node = 1;
+    string resource_id = 2;
+    int64 timestamp = 3;
+}
+
+// Response message for ReleaseResourceAccess
+message ResourceReleaseResponse {
+    bool success = 1;
+    string responder_node = 2;
+    string message = 3;
+}
