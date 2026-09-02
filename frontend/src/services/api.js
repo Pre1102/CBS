@@ -205,3 +205,40 @@ export async function cancelBooking(department, bookingId) {
   }
 }
 
+/**
+ * Fetch preset shared campus resources available for simulation.
+ */
+export async function fetchPresetResources() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/coordination/preset-resources`);
+    if (response.ok) {
+      return await response.json();
+    }
+    return [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Execute concurrent conflict simulation between two department nodes.
+ */
+export async function simulateConcurrentConflict(config) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/coordination/simulate-conflict`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(config)
+    });
+    const data = await response.json();
+    if (response.ok) {
+      return { success: true, data };
+    } else {
+      return { success: false, error: data.detail || 'Simulation execution failed' };
+    }
+  } catch (e) {
+    return { success: false, error: 'Network error connecting to API Gateway' };
+  }
+}
+
+

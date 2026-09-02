@@ -16,6 +16,46 @@ if (Test-Path "$ProjectRoot\.venv\Scripts\python.exe") {
     Write-Host "[INFO] Virtual environment (.venv) not found. Using system python." -ForegroundColor Yellow
 }
 
+# Ensure Node.js is available on PATH for Windows shells
+$NodeInstallDir = "C:\Program Files\nodejs"
+if (Test-Path $NodeInstallDir) {
+    $env:Path = "$NodeInstallDir;$env:Path"
+}
+
+# Detect Node.js/npm environment
+$NodeExe = Get-Command node.exe -ErrorAction SilentlyContinue
+$NpmCmd = Get-Command npm.cmd -ErrorAction SilentlyContinue
+
+if (-not $NodeExe) {
+    $PossibleNodePaths = @(
+        "$env:ProgramFiles\nodejs\node.exe",
+        "$env:ProgramFiles(x86)\nodejs\node.exe",
+        "$env:LOCALAPPDATA\Programs\nodejs\node.exe"
+    )
+    foreach ($Candidate in $PossibleNodePaths) {
+        if (Test-Path $Candidate) {
+            $NodeExe = @{ Source = $Candidate }
+            break
+        }
+    }
+}
+
+if (-not $NpmCmd) {
+    if ($NodeExe -and $NodeExe.Source) {
+        $NodeDir = Split-Path $NodeExe.Source -Parent
+        $NpmCandidate = Join-Path $NodeDir "npm.cmd"
+        if (Test-Path $NpmCandidate) {
+            $NpmCmd = @{ Source = $NpmCandidate }
+        }
+    }
+}
+
+if (-not $NpmCmd) {
+    Write-Host "[WARN] Node.js/npm not found on PATH. Frontend may not start until Node.js is installed." -ForegroundColor Yellow
+} else {
+    Write-Host "[OK] Found Node.js/npm: $($NpmCmd.Source)" -ForegroundColor Green
+}
+
 # Start CSE Node
 Write-Host "[1/5] Starting CSE Node (HTTP: 50151 / gRPC: 50051)..." -ForegroundColor Yellow
 $CseProcess = Start-Process -FilePath $PythonCmd -ArgumentList "-m", "backend.department_nodes.cse_node.main" -WorkingDirectory $ProjectRoot -PassThru -NoNewWindow
@@ -34,7 +74,13 @@ $GatewayProcess = Start-Process -FilePath $PythonCmd -ArgumentList "-m", "uvicor
 
 # Start Frontend
 Write-Host "[5/5] Starting React Frontend (HTTP: 5173)..." -ForegroundColor Yellow
-$FrontendProcess = Start-Process -FilePath "cmd.exe" -ArgumentList "/c", "npm run dev --prefix frontend" -WorkingDirectory $ProjectRoot -PassThru -NoNewWindow
+if ($NpmCmd) {
+    $NpmFile = $NpmCmd.Source
+    $FrontendProcess = Start-Process -FilePath "cmd.exe" -ArgumentList "/c", "npm run dev --prefix frontend" -WorkingDirectory $ProjectRoot -PassThru -NoNewWindow
+    Write-Host "[OK] Frontend launch command queued via cmd.exe" -ForegroundColor Green
+} else {
+    Write-Host "[WARN] Skipping frontend startup because npm was not found." -ForegroundColor Yellow
+}
 
 Start-Sleep -Seconds 3
 

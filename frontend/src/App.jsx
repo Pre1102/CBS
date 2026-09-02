@@ -5,9 +5,10 @@ import {
   fetchBookings,
   cancelBooking
 } from './services/api';
+import ConcurrentConflictDemo from './components/ConcurrentConflictDemo';
 
 function App() {
-  const [activeTab, setActiveTab] = useState('home'); // 'home' | 'resources' | 'bookings'
+  const [activeTab, setActiveTab] = useState('home'); // 'home' | 'resources' | 'bookings' | 'conflict'
 
   // Common State loaded directly from SQLite
   const [allResources, setAllResources] = useState({ CSE: [], IT: [], 'E&TC': [] });
@@ -168,6 +169,13 @@ function App() {
             onClick={() => setActiveTab('bookings')}
           >
             Bookings
+          </button>
+          <button
+            className={`nav-btn ${activeTab === 'conflict' ? 'active' : ''}`}
+            style={activeTab === 'conflict' ? { borderBottom: '2px solid #2563eb', color: '#1e3a8a', fontWeight: 700 } : {}}
+            onClick={() => setActiveTab('conflict')}
+          >
+            ⚡ Conflict Demo
           </button>
         </nav>
       </header>
@@ -458,6 +466,13 @@ function App() {
               </div>
             </div>
           </section>
+        )}
+
+        {/* ==================================================================== */}
+        {/* TAB 4: CONCURRENT CONFLICT SIMULATION DEMO                           */}
+        {/* ==================================================================== */}
+        {activeTab === 'conflict' && (
+          <ConcurrentConflictDemo />
         )}
       </main>
 

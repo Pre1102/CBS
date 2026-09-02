@@ -9,10 +9,12 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..",
 try:
     from backend.api_gateway.routes.health import router as health_router
     from backend.api_gateway.routes.departments import router as departments_router
+    from backend.api_gateway.routes.simulation import router as simulation_router
     from backend.department_nodes.common.config import GATEWAY_HOST, GATEWAY_PORT
 except ImportError:
     from api_gateway.routes.health import router as health_router
     from api_gateway.routes.departments import router as departments_router
+    from api_gateway.routes.simulation import router as simulation_router
     from department_nodes.common.config import GATEWAY_HOST, GATEWAY_PORT
 
 app = FastAPI(
@@ -26,6 +28,10 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:5173",
         "http://127.0.0.1:5173",
+        "http://localhost:5174",
+        "http://127.0.0.1:5174",
+        "http://localhost:5175",
+        "http://127.0.0.1:5175",
         "http://localhost:3000",
         "http://127.0.0.1:3000"
     ],
@@ -37,6 +43,7 @@ app.add_middleware(
 # Register routers
 app.include_router(health_router)
 app.include_router(departments_router)
+app.include_router(simulation_router)
 
 @app.get("/")
 def get_root():
