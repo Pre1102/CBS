@@ -181,7 +181,7 @@ def create_booking(db_path: str, booking: BookingCreate, node_dept: str) -> Dict
 
 def cancel_booking(db_path: str, booking_id: int) -> Dict[str, Any]:
     """
-    Cancel an existing booking by setting status to CANCELLED.
+    Delete an existing booking from the node SQLite database.
     """
     conn = get_connection(db_path)
     cursor = conn.cursor()
@@ -191,9 +191,9 @@ def cancel_booking(db_path: str, booking_id: int) -> Dict[str, Any]:
         conn.close()
         raise HTTPException(status_code=404, detail=f"Booking ID {booking_id} not found")
 
-    cursor.execute("UPDATE bookings SET status = 'CANCELLED' WHERE id = ?;", (booking_id,))
+    cursor.execute("DELETE FROM bookings WHERE id = ?;", (booking_id,))
     conn.commit()
-    cursor.execute("SELECT * FROM bookings WHERE id = ?;", (booking_id,))
-    updated_row = cursor.fetchone()
     conn.close()
-    return dict(updated_row)
+    deleted_booking = dict(row)
+    deleted_booking["status"] = "CANCELLED"
+    return deleted_booking

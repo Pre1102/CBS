@@ -16,6 +16,7 @@ function App() {
 
   // Booking Form State (starts empty, uses placeholders for manual entry)
   const [bookingDept, setBookingDept] = useState('CSE');
+  const [resourceDept, setResourceDept] = useState('CSE');
   const [bookingResourceId, setBookingResourceId] = useState('');
   const [bookingDate, setBookingDate] = useState('');
   const [bookingStartTime, setBookingStartTime] = useState('');
@@ -51,7 +52,7 @@ function App() {
 
   // Navigate & Pre-select Resource for Booking
   const handleQuickBook = (dept, resId) => {
-    setBookingDept(dept);
+    setResourceDept(dept);
     if (resId) setBookingResourceId(String(resId));
     setActiveTab('bookings');
   };
@@ -87,11 +88,12 @@ function App() {
       purpose: "Campus Resource Reservation"
     };
 
-    const res = await createBooking(bookingDept, payload);
+    const resourceName = getResourceNameById(resourceDept, Number(bookingResourceId));
+    const res = await createBooking(resourceDept, payload);
     if (res.success) {
       setBookingAlert({
         type: 'success',
-        text: `Booking confirmed successfully! Saved to ${bookingDept} database with Booking ID #${res.data.id}`
+        text: `Booking confirmed! Booking Department: ${bookingDept} Department | Resource Department: ${resourceDept} Department | Resource: ${resourceName} | Booked By: ${bookingUserName} | Date: ${bookingDate} | Time: ${bookingStartTime} - ${bookingEndTime}`
       });
       // Clear form inputs after successful SQLite persistence
       setBookingUserName('');
@@ -124,16 +126,43 @@ function App() {
     }
   };
 
+  const getResourceDisplayKey = (dept, resource) => {
+    const name = String(resource?.name || '').trim();
+    return `${dept}|${name}`;
+  };
+
+  const getDepartmentResourcesForDisplay = (dept) => {
+    const seen = new Set();
+    return (allResources[dept] || []).filter((resource) => {
+      const key = getResourceDisplayKey(dept, resource);
+      if (!resource?.name || seen.has(key)) {
+        return false;
+      }
+      seen.add(key);
+      return true;
+    });
+  };
+
   // Helper to gather flat array of resources across departments
   const getFlatResources = () => {
+    const departments = ['CSE', 'IT', 'E&TC'];
+    const merged = [];
+    const seen = new Set();
+
+    departments.forEach((dept) => {
+      getDepartmentResourcesForDisplay(dept).forEach((resource) => {
+        const key = getResourceDisplayKey(dept, resource);
+        if (seen.has(key)) return;
+        seen.add(key);
+        merged.push({ ...resource, dept });
+      });
+    });
+
     if (selectedDeptFilter === 'ALL') {
-      return [
-        ...allResources.CSE.map(r => ({ ...r, dept: 'CSE' })),
-        ...allResources.IT.map(r => ({ ...r, dept: 'IT' })),
-        ...allResources['E&TC'].map(r => ({ ...r, dept: 'E&TC' }))
-      ];
+      return merged;
     }
-    return (allResources[selectedDeptFilter] || []).map(r => ({ ...r, dept: selectedDeptFilter }));
+
+    return getDepartmentResourcesForDisplay(selectedDeptFilter).map(r => ({ ...r, dept: selectedDeptFilter }));
   };
 
   // Helper to resolve resource name from resource_id
@@ -199,7 +228,7 @@ function App() {
                   <div className="dept-card-header">
                     <h3>{dept} Department</h3>
                   </div>
-                  <p>{allResources[dept] ? allResources[dept].length : 0} shared resources registered</p>
+                  <p>{getDepartmentResourcesForDisplay(dept).length} shared resources registered</p>
                 </div>
               ))}
             </div>
@@ -316,14 +345,14 @@ function App() {
                 <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', fontWeight: 600 }}>Reserve a Resource</h3>
                 <form onSubmit={handleCreateBooking}>
                   <div className="form-group">
-                    <label>Target Department</label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                      <label style={{ margin: 0 }}>Booking Department</label>
+                    </div>
                     <select
                       className="form-control"
                       value={bookingDept}
-                      onChange={(e) => {
-                        setBookingDept(e.target.value);
-                        setBookingResourceId('');
-                      }}
+                      onChange={(e) => setBookingDept(e.target.value)}
+                      style={{ fontWeight: 600 }}
                     >
                       <option value="CSE">CSE Department</option>
                       <option value="IT">IT Department</option>
@@ -332,15 +361,32 @@ function App() {
                   </div>
 
                   <div className="form-group">
-                    <label>Resource Name</label>
+                    <label>Resource Department</label>
+                    <select
+                      className="form-control"
+                      value={resourceDept}
+                      onChange={(e) => {
+                        setResourceDept(e.target.value);
+                        setBookingResourceId('');
+                      }}
+                      style={{ fontWeight: 600 }}
+                    >
+                      <option value="CSE">CSE Department</option>
+                      <option value="IT">IT Department</option>
+                      <option value="E&TC">E&TC Department</option>
+                    </select>
+                  </div>
+
+                  <div className="form-group">
+                    <label>Resource</label>
                     <select
                       className="form-control"
                       value={bookingResourceId}
                       onChange={(e) => setBookingResourceId(e.target.value)}
                     >
                       <option value="">Select Resource...</option>
-                      {(allResources[bookingDept] || []).map(r => (
-                        <option key={r.id} value={r.id}>{r.name} ({r.resource_type})</option>
+                      {getDepartmentResourcesForDisplay(resourceDept).map(r => (
+                        <option key={`${r.dept}-${r.id}`} value={r.id}>{r.name} ({r.resource_type})</option>
                       ))}
                     </select>
                   </div>
@@ -428,6 +474,7 @@ function App() {
                         <th>ID</th>
                         <th>Resource</th>
                         <th>User</th>
+                        <th>Booking Department</th>
                         <th>Date</th>
                         <th>Time</th>
                         <th>Status</th>
@@ -440,6 +487,19 @@ function App() {
                           <td>#{b.id}</td>
                           <td><strong>{getResourceNameById(activeBookingsDept, b.resource_id)}</strong></td>
                           <td>{b.booked_by || b.user_name || 'User'}</td>
+                          <td>
+                            <span style={{
+                              backgroundColor: '#e0e7ff',
+                              color: '#3730a3',
+                              padding: '0.2rem 0.6rem',
+                              borderRadius: '0.25rem',
+                              fontSize: '0.75rem',
+                              fontWeight: 600,
+                              whiteSpace: 'nowrap'
+                            }}>
+                              {b.department || activeBookingsDept} Department
+                            </span>
+                          </td>
                           <td>{b.booking_date}</td>
 
                           <td>{b.start_time} - {b.end_time}</td>

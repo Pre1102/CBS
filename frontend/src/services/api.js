@@ -39,7 +39,10 @@ export async function fetchDepartmentStatuses() {
  */
 export async function fetchDepartmentResources(department) {
   try {
-    const deptKey = department === 'E&TC' ? 'entc' : department.toLowerCase();
+    const normalizedDepartment = department.toUpperCase().replace(/[^A-Z]/g, '');
+    const deptKey = ['ENTC', 'ETC'].includes(normalizedDepartment)
+      ? 'entc'
+      : department.toLowerCase();
     const response = await fetch(`${API_BASE_URL}/api/departments/${deptKey}/resources`);
     if (response.ok) {
       return await response.json();
