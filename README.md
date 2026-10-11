@@ -85,6 +85,23 @@ Run the stop script to terminate all project processes cleanly:
 - **E&TC Department Node**: HTTP `http://127.0.0.1:50153` / gRPC `50053`
 - **React Frontend**: `http://localhost:5173`
 
+## Accessing the Web Application from Another Device
+
+The frontend and API Gateway can be reached from another device on the same
+network. Start the system from PowerShell with the gateway listening on all
+interfaces and add the browser's origin to the gateway's CORS allowlist:
+
+```powershell
+$env:GATEWAY_HOST = "0.0.0.0"
+$env:FRONTEND_ORIGINS = "http://<HOST-LAN-IP>:5173"
+.\scripts\run_project.ps1
+```
+
+Replace `<HOST-LAN-IP>` with the IP address of the computer running the project
+(for example, `192.168.1.20`). Open `http://<HOST-LAN-IP>:5173` on the other
+device. The frontend sends API requests to port `8000` on the same host. The
+department services and their synchronization logic remain unchanged.
+
 ---
 
 ## Automated Testing

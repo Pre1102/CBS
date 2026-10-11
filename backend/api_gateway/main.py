@@ -22,6 +22,12 @@ app = FastAPI(
     description="Central API Gateway entry point for frontend requests."
 )
 
+frontend_origins = [
+    origin.strip()
+    for origin in os.getenv("FRONTEND_ORIGINS", "").split(",")
+    if origin.strip()
+]
+
 # Configure CORS to permit requests from local React Vite dev server
 app.add_middleware(
     CORSMiddleware,
@@ -33,7 +39,8 @@ app.add_middleware(
         "http://localhost:5175",
         "http://127.0.0.1:5175",
         "http://localhost:3000",
-        "http://127.0.0.1:3000"
+        "http://127.0.0.1:3000",
+        *frontend_origins,
     ],
     allow_credentials=True,
     allow_methods=["*"],

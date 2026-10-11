@@ -70,7 +70,8 @@ $EntcProcess = Start-Process -FilePath $PythonCmd -ArgumentList "-m", "backend.d
 
 # Start API Gateway
 Write-Host "[4/5] Starting API Gateway (HTTP: 8000)..." -ForegroundColor Yellow
-$GatewayProcess = Start-Process -FilePath $PythonCmd -ArgumentList "-m", "uvicorn", "backend.api_gateway.main:app", "--host", "127.0.0.1", "--port", "8000" -WorkingDirectory $ProjectRoot -PassThru -NoNewWindow
+$GatewayHost = if ($env:GATEWAY_HOST) { $env:GATEWAY_HOST } else { "127.0.0.1" }
+$GatewayProcess = Start-Process -FilePath $PythonCmd -ArgumentList "-m", "uvicorn", "backend.api_gateway.main:app", "--host", $GatewayHost, "--port", "8000" -WorkingDirectory $ProjectRoot -PassThru -NoNewWindow
 
 # Start Frontend
 Write-Host "[5/5] Starting React Frontend (HTTP: 5173)..." -ForegroundColor Yellow

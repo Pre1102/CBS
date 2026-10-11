@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || `http://${window.location.hostname}:8000`;
 
 /**
  * Check health status of Gateway /api/health endpoint.
@@ -243,5 +243,4 @@ export async function simulateConcurrentConflict(config) {
     return { success: false, error: 'Network error connecting to API Gateway' };
   }
 }
-
 
