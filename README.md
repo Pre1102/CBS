@@ -102,6 +102,22 @@ Replace `<HOST-LAN-IP>` with the IP address of the computer running the project
 device. The frontend sends API requests to port `8000` on the same host. The
 department services and their synchronization logic remain unchanged.
 
+## Sharing the Web Application with Cloudflare Tunnel
+
+The Vite development server proxies `/api` requests to the local API Gateway,
+so the frontend and API can be reached through one Cloudflare Tunnel. Start the
+project, then in a second PowerShell window run:
+
+```powershell
+cloudflared tunnel --url http://localhost:5173
+```
+
+Open the `https://...trycloudflare.com` URL printed by `cloudflared`. A Quick
+Tunnel URL is temporary and changes when the tunnel restarts. Keep the project
+and tunnel running while the app is in use. The URL is publicly reachable, so
+only share it with people you trust; this development application does not
+provide user authentication.
+
 ---
 
 ## Automated Testing
